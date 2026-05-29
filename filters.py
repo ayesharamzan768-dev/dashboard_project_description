@@ -8,12 +8,12 @@ def load_and_clean_data(filepath):
         df = pd.read_csv(filepath)
         df.columns = df.columns.str.strip()
         
-        # Ensure numerical types are correct
-        df['Year'] = df['Year'].astype(int)
-        df['Reported_Confirmed_Cases'] = df['Reported_Confirmed_Cases'].astype(int)
-        df['Estimated_Cases_WHO'] = df['Estimated_Cases_WHO'].astype(int)
-        df['Reported_Deaths'] = df['Reported_Deaths'].astype(int)
-        df['Estimated_Deaths_WHO'] = df['Estimated_Deaths_WHO'].astype(int)
+        # Safe numeric conversions
+        df = df.astype(int)
+        df = df.astype(int)
+        df = df.astype(int)
+        df = df.astype(int)
+        df = df.astype(int)
         
         return df
     except Exception as e:
@@ -22,16 +22,21 @@ def load_and_clean_data(filepath):
 
 def apply_dashboard_filters(df, selected_provinces, year_range, rainfall_range):
     """
-    Applies the active dashboard sidebar selections to dynamically filter rows.
+    Applies filters dynamically. Bypasses syntax issues completely.
     """
     if df.empty:
         return df
         
+    # 1. Category Filter (Province)
     if selected_provinces:
         df = df[df['Province'].isin(selected_provinces)]
         
-    # Corrected Syntax without unmatched brackets
-    df = df[(df['Year'] >= year_range[0]) & (df['Year'] <= year_range[1])]
-    df = df[(df['Rainfall_Anomaly_mm'] >= rainfall_range[0]) & (df['Rainfall_Anomaly_mm'] <= rainfall_range[1])]
+    # 2. Timeline Filter
+    start_yr, end_yr = year_range
+    df = df.query("Year >= @start_yr and Year <= @end_yr")
+    
+    # 3. Environmental Filter
+    start_rf, end_rf = rainfall_range
+    df = df.query("Rainfall_Anomaly_mm >= @start_rf and Rainfall_Anomaly_mm <= @end_rf")
     
     return df
