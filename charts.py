@@ -5,7 +5,7 @@ import pandas as pd
 def generate_all_charts(df):
     """
     Generates exactly 10 distinct interactive Plotly charts.
-    Uses plotly.graph_objects to bypass Pandas 3.0 get_group incompatibility bug.
+    Uses plotly.graph_objects and bracket-free lists to prevent markdown parser issues.
     """
     if df.empty:
         st.warning("No data available for the selected filters.")
@@ -17,25 +17,25 @@ def generate_all_charts(df):
     # --- 1. PIE CHART ---
     st.subheader("1. Provincial Distribution of Estimated Cases")
     prov_cases = df.groupby("Province").agg(dict(Estimated_Cases_WHO="sum")).reset_index()
-    fig1 = go.Figure(data=go.Pie(
+    fig1 = go.Figure(data=list(tuple((go.Pie(
         labels=prov_cases.Province,
         values=prov_cases.Estimated_Cases_WHO,
         hole=0.3
-    ))
+    ),))))
     fig1.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig1, use_container_width=True)
 
     # --- 2. HISTOGRAM ---
     st.subheader("2. Frequency Distribution of Rainfall Anomaly (mm)")
-    fig2 = go.Figure(data=go.Histogram(
+    fig2 = go.Figure(data=list(tuple((go.Histogram(
         x=df.Rainfall_Anomaly_mm,
         marker_color="skyblue"
-    ))
+    ),))))
     fig2.update_layout(bargap=0.1, margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig2, use_container_width=True)
 
     # --- 3. LINE CHART ---
-    st.subheader("3. Yearly Malaria Cases Trend (2015 - 2025)")
+    st.subheader("3. Yearly Malaria Cases Trend (2000 - 2025)")
     yearly = df.groupby("Year").agg(dict(Reported_Confirmed_Cases="sum", Estimated_Cases_WHO="sum")).reset_index()
     fig3 = go.Figure()
     fig3.add_trace(go.Scatter(
@@ -58,11 +58,11 @@ def generate_all_charts(df):
     # --- 4. BAR CHART ---
     st.subheader("4. Total Reported Deaths by Province")
     prov_deaths = df.groupby("Province").agg(dict(Reported_Deaths="sum")).reset_index()
-    fig4 = go.Figure(data=go.Bar(
+    fig4 = go.Figure(data=list(tuple((go.Bar(
         x=prov_deaths.Province,
         y=prov_deaths.Reported_Deaths,
         marker_color="salmon"
-    ))
+    ),))))
     fig4.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig4, use_container_width=True)
 
@@ -97,25 +97,25 @@ def generate_all_charts(df):
     st.subheader("7. Correlation Matrix of Variables")
     corr_cols = list(('Reported_Confirmed_Cases', 'Estimated_Cases_WHO', 'Reported_Deaths', 'Estimated_Deaths_WHO', 'Rainfall_Anomaly_mm', 'Bednets_Distributed'))
     corr_matrix = df.filter(items=corr_cols).corr()
-    fig7 = go.Figure(data=go.Heatmap(
-        z=corr_matrix.values,
-        x=corr_matrix.columns,
-        y=corr_matrix.index,
+    fig7 = go.Figure(data=list(tuple((go.Heatmap(
+        z=corr_matrix.values.tolist(),
+        x=corr_matrix.columns.tolist(),
+        y=corr_matrix.index.tolist(),
         colorscale="RdBu_r",
         zmin=-1, zmax=1
-    ))
+    ),))))
     fig7.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig7, use_container_width=True)
 
     # --- 8. AREA CHART ---
     st.subheader("8. Cumulative Bednets Distributed Over Time")
     bednets_yearly = df.groupby("Year").agg(dict(Bednets_Distributed="sum")).reset_index()
-    fig8 = go.Figure(data=go.Scatter(
+    fig8 = go.Figure(data=list(tuple((go.Scatter(
         x=bednets_yearly.Year,
         y=bednets_yearly.Bednets_Distributed,
         fill='tozeroy',
         line=dict(color='deepskyblue')
-    ))
+    ),))))
     fig8.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig8, use_container_width=True)
 
@@ -123,11 +123,11 @@ def generate_all_charts(df):
     st.subheader("9. Frequency of Tracked Records per Province")
     prov_counts = df.Province.value_counts().reset_index()
     prov_counts.columns = ('Province', 'Count')
-    fig9 = go.Figure(data=go.Bar(
+    fig9 = go.Figure(data=list(tuple((go.Bar(
         x=prov_counts.Province,
         y=prov_counts.Count,
         marker_color="violet"
-    ))
+    ),))))
     fig9.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig9, use_container_width=True)
 
