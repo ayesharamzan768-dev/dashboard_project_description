@@ -6,8 +6,11 @@ def load_and_clean_data(filepath):
     """
     try:
         df = pd.read_csv(filepath)
-        # Clean whitespaces
+        # Strip any accidental whitespaces from column names
         df.columns = df.columns.str.strip()
+        
+        # 🚨 THE GOLDEN FIX: Convert Province directly to string on load (No brackets used)
+        df = df.assign(Province=df.Province.astype(str))
         
         # Clean numerical types without using any square brackets
         clean_types = dict(
