@@ -5,25 +5,32 @@ import pandas as pd
 def generate_all_charts(df):
     """
     Generates exactly 10 distinct interactive Plotly charts.
-    Uses plotly.graph_objects to bypass the Pandas 3.0 get_group incompatibility bug.
+    Uses plotly.graph_objects to bypass Pandas 3.0 get_group incompatibility bug.
     """
     if df.empty:
         st.warning("No data available for the selected filters.")
         return
 
-    # Force plain string conversion on Province
+    # Force plain string conversion on Province to prevent group errors
     df = df.assign(Province=df.Province.astype(str))
 
     # --- 1. PIE CHART ---
     st.subheader("1. Provincial Distribution of Estimated Cases")
     prov_cases = df.groupby("Province").agg(dict(Estimated_Cases_WHO="sum")).reset_index()
-    fig1 = go.Figure(data=)
+    fig1 = go.Figure(data=go.Pie(
+        labels=prov_cases.Province,
+        values=prov_cases.Estimated_Cases_WHO,
+        hole=0.3
+    ))
     fig1.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig1, use_container_width=True)
 
     # --- 2. HISTOGRAM ---
     st.subheader("2. Frequency Distribution of Rainfall Anomaly (mm)")
-    fig2 = go.Figure(data=)
+    fig2 = go.Figure(data=go.Histogram(
+        x=df.Rainfall_Anomaly_mm,
+        marker_color="skyblue"
+    ))
     fig2.update_layout(bargap=0.1, margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig2, use_container_width=True)
 
@@ -51,7 +58,11 @@ def generate_all_charts(df):
     # --- 4. BAR CHART ---
     st.subheader("4. Total Reported Deaths by Province")
     prov_deaths = df.groupby("Province").agg(dict(Reported_Deaths="sum")).reset_index()
-    fig4 = go.Figure(data=)
+    fig4 = go.Figure(data=go.Bar(
+        x=prov_deaths.Province,
+        y=prov_deaths.Reported_Deaths,
+        marker_color="salmon"
+    ))
     fig4.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig4, use_container_width=True)
 
@@ -99,7 +110,12 @@ def generate_all_charts(df):
     # --- 8. AREA CHART ---
     st.subheader("8. Cumulative Bednets Distributed Over Time")
     bednets_yearly = df.groupby("Year").agg(dict(Bednets_Distributed="sum")).reset_index()
-    fig8 = go.Figure(data=)
+    fig8 = go.Figure(data=go.Scatter(
+        x=bednets_yearly.Year,
+        y=bednets_yearly.Bednets_Distributed,
+        fill='tozeroy',
+        line=dict(color='deepskyblue')
+    ))
     fig8.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig8, use_container_width=True)
 
@@ -107,7 +123,11 @@ def generate_all_charts(df):
     st.subheader("9. Frequency of Tracked Records per Province")
     prov_counts = df.Province.value_counts().reset_index()
     prov_counts.columns = ('Province', 'Count')
-    fig9 = go.Figure(data=)
+    fig9 = go.Figure(data=go.Bar(
+        x=prov_counts.Province,
+        y=prov_counts.Count,
+        marker_color="violet"
+    ))
     fig9.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig9, use_container_width=True)
 
