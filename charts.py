@@ -11,14 +11,13 @@ def generate_all_charts(df):
         st.warning("No data available for the selected filters.")
         return
 
-    # 🚨 THE GOLDEN FIX: Convert Province to standard string to prevent Plotly's get_group KeyError!
-    df = df.copy()
-    df.Province = df.Province.astype(str)
+    # 🚨 Force string type using safe.assign() method to prevent KeyError across all plots
+    df = df.assign(Province=df.Province.astype(str))
 
     # 1. PIE CHART (Category distribution)
     st.subheader("1. Provincial Distribution of Estimated Cases")
     prov_cases = df.groupby("Province").agg(dict(Estimated_Cases_WHO="sum")).reset_index()
-    prov_cases.Province = prov_cases.Province.astype(str)
+    prov_cases = prov_cases.assign(Province=prov_cases.Province.astype(str))
     fig1 = px.pie(
         prov_cases, 
         values="Estimated_Cases_WHO", 
@@ -53,8 +52,7 @@ def generate_all_charts(df):
     # 4. BAR CHART (Comparison across categories)
     st.subheader("4. Total Reported Deaths by Province")
     prov_deaths = df.groupby("Province").agg(dict(Reported_Deaths="sum")).reset_index()
-    # Force string type on aggregated dataframe as well to clear the bug
-    prov_deaths.Province = prov_deaths.Province.astype(str)
+    prov_deaths = prov_deaths.assign(Province=prov_deaths.Province.astype(str))
     fig4 = px.bar(
         prov_deaths, 
         x="Province", 
