@@ -12,7 +12,7 @@ def load_and_clean_data(filepath):
         # Plain string conversion to avoid category grouping errors
         df = df.assign(Province=df.Province.astype(str))
         
-        # Clean numerical types without using any square brackets
+        # Clean numerical types without using any square brackets to prevent parsing issues
         clean_types = dict(
             Year=int,
             Reported_Confirmed_Cases=int,
@@ -28,7 +28,7 @@ def load_and_clean_data(filepath):
 
 def apply_dashboard_filters(df, selected_provinces, year_range, rainfall_range):
     """
-    Applies filters dynamically using standard queries to prevent syntax issues.
+    Applies filters dynamically. Uses tuples and query to bypass bracket issues completely.
     """
     if df.empty:
         return df
