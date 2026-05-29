@@ -1,51 +1,48 @@
-import streamlit as st
 import pandas as pd
 
-def apply_filters(df):
-    st.sidebar.header("🔍 Filters")
-    
-    # Clean column names just in case there are hidden spaces
-    df.columns = df.columns.str.strip()
-    
-    # Convert categorical/object columns to clean string type to avoid unused categories error
-    for col in df.columns:
-        if isinstance(df[col].dtype, pd.CategoricalDtype) or df[col].dtype == 'object':
-            df[col] = df[col].astype(str).str.strip()
-
-    # 1. Target Province Filter
-    if 'Target Province' in df.columns:
-        unique_provinces = sorted(df['Target Province'].dropna().unique())
-        selected_provinces = st.sidebar.multiselect(
-            "Select Target Province", 
-            options=unique_provinces, 
-            default=unique_provinces
+def load_and_clean_data(filepath):
+    """
+    Loads the malaria dataset and ensures all column names and data types are clean.
+    """
+    try:
+        df = pd.read_csv(filepath)
+        # Strip any accidental whitespaces from column names
+        df.columns = df.columns.str.strip()
+        
+        # Plain string conversion to avoid category grouping errors
+        df = df.assign(Province=df.Province.astype(str))
+        
+        # Clean numerical types without using any square brackets
+        clean_types = dict(
+            Year=int,
+            Reported_Confirmed_Cases=int,
+            Estimated_Cases_WHO=int,
+            Reported_Deaths=int,
+            Estimated_Deaths_WHO=int
         )
-        if selected_provinces:
-            df = df[df['Target Province'].isin(selected_provinces)]
-    
-    # 2. Year Filter
-    if 'Year' in df.columns:
-        # Fill NaN years or drop them for filter
-        df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
-        unique_years = sorted([int(x) for x in df['Year'].dropna().unique()])
-        if unique_years:
-            selected_years = st.sidebar.multiselect(
-                "Select Year", 
-                options=unique_years, 
-                default=unique_years
-            )
-            if selected_years:
-                df = df[df['Year'].isin(selected_years)]
-            
-    # 3. Development Partner Filter
-    if 'Development Partner' in df.columns:
-        unique_partners = sorted(df['Development Partner'].dropna().unique())
-        selected_partners = st.sidebar.multiselect(
-            "Select Development Partner", 
-            options=unique_partners, 
-            default=unique_partners
-        )
-        if selected_partners:
-            df = df[df['Development Partner'].isin(selected_partners)]
+        df = df.astype(clean_types)
+        return df
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        return pd.DataFrame()
 
+def apply_dashboard_filters(df, selected_provinces, year_range, rainfall_range):
+    """
+    Applies filters dynamically using standard queries to prevent syntax issues.
+    """
+    if df.empty:
+        return df
+        
+    # 1. Filter by selected provinces
+    if selected_provinces:
+        df = df[df.Province.isin(selected_provinces)]
+        
+    # 2. Filter by Year range using tuple unpacking
+    start_year, end_year = year_range
+    df = df.query("Year >= @start_year and Year <= @end_year")
+    
+    # 3. Filter by Rainfall Anomaly range using tuple unpacking
+    start_rain, end_rain = rainfall_range
+    df = df.query("Rainfall_Anomaly_mm >= @start_rain and Rainfall_Anomaly_mm <= @end_rain")
+    
     return df
