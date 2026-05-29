@@ -1,137 +1,126 @@
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
 
 def generate_all_charts(df):
     """
     Generates exactly 10 distinct interactive Plotly charts.
-    100% Bracket-Free Code to prevent markdown parser issues.
+    Uses plotly.graph_objects to bypass the Pandas 3.0 get_group incompatibility bug.
     """
     if df.empty:
         st.warning("No data available for the selected filters.")
         return
 
-    # 🚨 Force string type using safe.assign() method to prevent KeyError across all plots
+    # Force plain string conversion on Province
     df = df.assign(Province=df.Province.astype(str))
 
-    # 1. PIE CHART (Category distribution)
+    # --- 1. PIE CHART ---
     st.subheader("1. Provincial Distribution of Estimated Cases")
     prov_cases = df.groupby("Province").agg(dict(Estimated_Cases_WHO="sum")).reset_index()
-    prov_cases = prov_cases.assign(Province=prov_cases.Province.astype(str))
-    fig1 = px.pie(
-        prov_cases, 
-        values="Estimated_Cases_WHO", 
-        names="Province",
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
+    fig1 = go.Figure(data=)
+    fig1.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig1, use_container_width=True)
 
-    # 2. HISTOGRAM (Frequency distribution)
+    # --- 2. HISTOGRAM ---
     st.subheader("2. Frequency Distribution of Rainfall Anomaly (mm)")
-    fig2 = px.histogram(
-        df, 
-        x="Rainfall_Anomaly_mm", 
-        nbins=10,
-        color_discrete_sequence=list(("skyblue",))
-    )
-    fig2.update_layout(bargap=0.1)
+    fig2 = go.Figure(data=)
+    fig2.update_layout(bargap=0.1, margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig2, use_container_width=True)
 
-    # 3. LINE CHART (Temporal Trend)
+    # --- 3. LINE CHART ---
     st.subheader("3. Yearly Malaria Cases Trend (2015 - 2025)")
     yearly = df.groupby("Year").agg(dict(Reported_Confirmed_Cases="sum", Estimated_Cases_WHO="sum")).reset_index()
-    fig3 = px.line(
-        yearly, 
-        x="Year", 
-        y=list(("Reported_Confirmed_Cases", "Estimated_Cases_WHO")),
-        markers=True,
-        color_discrete_map=dict(Reported_Confirmed_Cases="navy", Estimated_Cases_WHO="red")
-    )
+    fig3 = go.Figure()
+    fig3.add_trace(go.Scatter(
+        x=yearly.Year, 
+        y=yearly.Estimated_Cases_WHO, 
+        name='WHO Estimated', 
+        mode='lines+markers',
+        line=dict(color='red', width=2)
+    ))
+    fig3.add_trace(go.Scatter(
+        x=yearly.Year, 
+        y=yearly.Reported_Confirmed_Cases, 
+        name='Reported Confirmed', 
+        mode='lines+markers',
+        line=dict(color='navy', width=2)
+    ))
+    fig3.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig3, use_container_width=True)
 
-    # 4. BAR CHART (Comparison across categories)
+    # --- 4. BAR CHART ---
     st.subheader("4. Total Reported Deaths by Province")
     prov_deaths = df.groupby("Province").agg(dict(Reported_Deaths="sum")).reset_index()
-    prov_deaths = prov_deaths.assign(Province=prov_deaths.Province.astype(str))
-    fig4 = px.bar(
-        prov_deaths, 
-        x="Province", 
-        y="Reported_Deaths", 
-        color="Province",
-        color_discrete_sequence=px.colors.qualitative.Pastel
-    )
+    fig4 = go.Figure(data=)
+    fig4.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig4, use_container_width=True)
 
-    # 5. SCATTER PLOT (Numerical Relationship)
+    # --- 5. SCATTER PLOT ---
     st.subheader("5. Rainfall Anomaly vs. Confirmed Cases")
-    fig5 = px.scatter(
-        df, 
-        x="Rainfall_Anomaly_mm", 
-        y="Reported_Confirmed_Cases", 
-        color="Province",
-        size="Reported_Deaths",
-        hover_data=list(("Year", "Province"))
-    )
+    fig5 = go.Figure()
+    for prov in df.Province.unique():
+        prov_df = df.query("Province == @prov")
+        fig5.add_trace(go.Scatter(
+            x=prov_df.Rainfall_Anomaly_mm,
+            y=prov_df.Reported_Confirmed_Cases,
+            mode='markers',
+            name=str(prov),
+            marker=dict(size=12)
+        ))
+    fig5.update_layout(xaxis_title="Rainfall Anomaly (mm)", yaxis_title="Confirmed Cases", margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig5, use_container_width=True)
 
-    # 6. BOX PLOT (Variance and outliers)
+    # --- 6. BOX PLOT ---
     st.subheader("6. Plasmodium Vivax Strain Spread by Province")
-    fig6 = px.box(
-        df, 
-        x="Province", 
-        y="Plasmodium_Vivax_Pct", 
-        color="Province",
-        color_discrete_sequence=px.colors.qualitative.Pastel1
-    )
+    fig6 = go.Figure()
+    for prov in df.Province.unique():
+        prov_df = df.query("Province == @prov")
+        fig6.add_trace(go.Box(
+            y=prov_df.Plasmodium_Vivax_Pct,
+            name=str(prov)
+        ))
+    fig6.update_layout(yaxis_title="Vivax Percentage (%)", margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig6, use_container_width=True)
 
-    # 7. HEATMAP (Feature correlation)
+    # --- 7. HEATMAP ---
     st.subheader("7. Correlation Matrix of Variables")
-    corr_cols = list((
-        "Reported_Confirmed_Cases", 
-        "Estimated_Cases_WHO", 
-        "Reported_Deaths", 
-        "Estimated_Deaths_WHO", 
-        "Rainfall_Anomaly_mm", 
-        "Bednets_Distributed"
-    ))
+    corr_cols = list(('Reported_Confirmed_Cases', 'Estimated_Cases_WHO', 'Reported_Deaths', 'Estimated_Deaths_WHO', 'Rainfall_Anomaly_mm', 'Bednets_Distributed'))
     corr_matrix = df.filter(items=corr_cols).corr()
-    fig7 = px.imshow(
-        corr_matrix, 
-        text_auto=".2f", 
-        color_continuous_scale="RdBu_r"
-    )
+    fig7 = go.Figure(data=go.Heatmap(
+        z=corr_matrix.values,
+        x=corr_matrix.columns,
+        y=corr_matrix.index,
+        colorscale="RdBu_r",
+        zmin=-1, zmax=1
+    ))
+    fig7.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig7, use_container_width=True)
 
-    # 8. AREA CHART (Cumulative trends over time)
+    # --- 8. AREA CHART ---
     st.subheader("8. Cumulative Bednets Distributed Over Time")
     bednets_yearly = df.groupby("Year").agg(dict(Bednets_Distributed="sum")).reset_index()
-    fig8 = px.area(
-        bednets_yearly, 
-        x="Year", 
-        y="Bednets_Distributed",
-        color_discrete_sequence=list(("#4682B4",))
-    )
+    fig8 = go.Figure(data=)
+    fig8.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig8, use_container_width=True)
 
-    # 9. COUNT PLOT (Frequency count of records)
+    # --- 9. COUNT PLOT ---
     st.subheader("9. Frequency of Tracked Records per Province")
-    fig9 = px.histogram(
-        df, 
-        x="Province", 
-        color="Province",
-        color_discrete_sequence=px.colors.qualitative.Bold
-    )
+    prov_counts = df.Province.value_counts().reset_index()
+    prov_counts.columns = ('Province', 'Count')
+    fig9 = go.Figure(data=)
+    fig9.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig9, use_container_width=True)
 
-    # 10. VIOLIN PLOT (Probability density spread)
+    # --- 10. VIOLIN PLOT ---
     st.subheader("10. Density and Probability Spread of Estimated Deaths")
-    fig10 = px.violin(
-        df, 
-        x="Province", 
-        y="Estimated_Deaths_WHO", 
-        color="Province",
-        box=True,
-        points="all"
-    )
+    fig10 = go.Figure()
+    for prov in df.Province.unique():
+        prov_df = df.query("Province == @prov")
+        fig10.add_trace(go.Violin(
+            y=prov_df.Estimated_Deaths_WHO,
+            name=str(prov),
+            box_visible=True,
+            meanline_visible=True
+        ))
+    fig10.update_layout(margin=dict(t=30, b=10, l=10, r=10))
     st.plotly_chart(fig10, use_container_width=True)
