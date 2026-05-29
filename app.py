@@ -19,13 +19,13 @@ else:
     # --- SIDEBAR CONFIGURATION ---
     st.sidebar.header("🎯 Interactive Filtering Panel")
     
-    provinces = sorted(raw_df['Province'].unique()) if not raw_df.empty else []
+    provinces = sorted(raw_df['Province'].unique()) if not raw_df.empty else
     selected_provinces = st.sidebar.multiselect("Select Target Provinces:", provinces, default=provinces)
     
-    min_year, max_year = (int(raw_df['Year'].min()), int(raw_df['Year'].max())) if not raw_df.empty else (2015, 2025)
+    min_year, max_year = (int(raw_df.min()), int(raw_df.max())) if not raw_df.empty else (2015, 2025)
     year_range = st.sidebar.slider("Timeline Range (Years):", min_year, max_year, (min_year, max_year))
     
-    min_rain, max_rain = (float(raw_df['Rainfall_Anomaly_mm'].min()), float(raw_df['Rainfall_Anomaly_mm'].max())) if not raw_df.empty else (-50.0, 150.0)
+    min_rain, max_rain = (float(raw_df.min()), float(raw_df.max())) if not raw_df.empty else (-50.0, 150.0)
     rainfall_range = st.sidebar.slider("Rainfall Anomaly Range (mm):", min_rain, max_rain, (min_rain, max_rain))
     
     # Process Filter Masking
@@ -35,15 +35,22 @@ else:
     if not filtered_df.empty:
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric(label="Total Confirmed Cases", value=f"{filtered_df['Reported_Confirmed_Cases'].sum():,}")
+            st.metric(label="Total Confirmed Cases", value=f"{filtered_df.sum():,}")
         with col2:
-            st.metric(label="Total Tracked Deaths", value=f"{filtered_df['Reported_Deaths'].sum():,}")
+            st.metric(label="Total Tracked Deaths", value=f"{filtered_df.sum():,}")
         with col3:
-            st.metric(label="Total Bednets Distributed", value=f"{filtered_df['Bednets_Distributed'].sum():,}")
+            st.metric(label="Total Bednets Distributed", value=f"{filtered_df.sum():,}")
             
         st.markdown("---")
         
-        # Render the 10 Plots
+        # Render the 10 Plots (Plotly)
         generate_all_charts(filtered_df)
+        
+        # Interactive Scrollable Dataframe (Same as sample app!)
+        st.markdown("---")
+        st.subheader("📋 Interactive Data Table (Scroll, Sort & Search)")
+        st.markdown("Aap is table ko apni marzi se scroll kar sakte hain, columns par click karke sort kar sakte hain, aur right-corner se CSV download kar sakte hain.")
+        st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+        
     else:
         st.error("No records match the current slider values. Adjust filters to load plots.")
