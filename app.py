@@ -8,19 +8,24 @@ st.set_page_config(page_title="Global Malaria Pathogen Intelligence", layout="wi
 
 st.markdown("""
 <style>
- .stApp { background-color: #0d1117; color: #c9d1d9; }
-    div[data-testid="stMetricValue"] { color: #00ffcc!important; font-family: 'Courier New', monospace; font-weight: bold; }
-    div[data-testid="stMetricLabel"] { color: #8b949e!important; }
+.stApp { background-color: #0d1117; color: #c9d1d9; }
+    div[data-testid="stMetricValue"] { color: #ffffff!important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; font-size: 38px!important; }
+    div[data-testid="stMetricLabel"] { color: #8b949e!important; font-size: 14px!important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🛡️ Global Malaria & Pathogen Intelligence Portal")
-st.markdown("A futuristic unified Command Center mapping chronological trends, intervention dynamics, and pathogenetic variance since 2000.")
+# 🚨 Title & Subtitle block matching your screenshot exactly
+st.title("📊 Exploratory Data Analysis — Malaria Dashboard (Pakistan)")
+st.markdown("Developed for **EDA Course Assignment** | Instructor: **Ali Hassan Sherazi** | Deploy Status: <span style='color:#00ffcc; font-weight:bold;'>Verified Stable</span>", unsafe_allow_html=True)
 st.markdown("---")
 
 # Resolve correct path to data
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "malaria_data.csv")
 raw_df = load_and_clean_data(DATA_PATH)
+
+if raw_df.empty:
+    st.error("🚨 Failed to load data. Please check if the CSV file content is formatted correctly.")
+    st.stop()
 
 # --- SIDEBAR CONTROL PANEL ---
 st.sidebar.markdown("<h3 style='color:#00ffcc;'>INTELLIGENCE CONSOLE</h3>", unsafe_allow_html=True)
@@ -51,7 +56,7 @@ year_range = st.sidebar.slider("Timeline Boundaries:", min_year, max_year, (min_
 regions = sorted(raw_df.WHO_Region.unique().tolist())
 selected_regions = st.sidebar.multiselect("WHO Regions Filter:", regions, default=regions)
 
-# 3. Dynamic Countries multi-select (125 total countries resolved)
+# 3. Dynamic Countries multi-select (132 total countries resolved)
 if selected_regions:
     filtered_countries_df = raw_df.query("WHO_Region in @selected_regions")
     available_countries = sorted(filtered_countries_df.Country.unique().tolist())
@@ -70,24 +75,18 @@ st.sidebar.markdown("<br><div style='background-color:#1e2d24;color:#00ffcc;padd
 # Process Filter Masking
 filtered_df = apply_dashboard_filters(raw_df, selected_regions, selected_countries, year_range)
 
-# --- MAIN SCREEN METRIC PANELS ---
+# --- MAIN SCREEN METRIC PANELS (Exact 3 Columns Matching Your Image) ---
 if not filtered_df.empty:
-    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     
-    with kpi_col1:
-        st.metric(label="Total Nations", value=f"{filtered_df.Country.nunique()} / 125")
+    with col1:
+        st.metric(label="Total Confirmed Cases", value=f"{filtered_df.Reported_Confirmed_Cases.sum():,}")
         
-    with kpi_col2:
-        total_cases_mil = filtered_df.Estimated_Cases_WHO.sum() / 1000000
-        st.metric(label="WHO Estimated Cases", value=f"{total_cases_mil:.2f}M")
+    with col2:
+        st.metric(label="Total Tracked Deaths", value=f"{filtered_df.Reported_Deaths.sum():,}")
         
-    with kpi_col3:
-        total_deaths = filtered_df.Estimated_Deaths_WHO.sum()
-        st.metric(label="Estimated Pathogen Mortality", value=f"{total_deaths:,}")
-        
-    with kpi_col4:
-        total_nets_mil = filtered_df.Bednets_Distributed.sum() / 1000000
-        st.metric(label="Bednets Distributed", value=f"{total_nets_mil:.2f}M")
+    with col3:
+        st.metric(label="Total Bednets Distributed", value=f"{filtered_df.Bednets_Distributed.sum():,}")
         
     st.markdown("---")
     
