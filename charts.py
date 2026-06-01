@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
+from itertools import islice
 
 def generate_all_charts(df, point_option):
     """
@@ -68,7 +69,7 @@ def generate_all_charts(df, point_option):
             x=country_deaths.Country,
             y=country_deaths.Reported_Deaths,
             marker_color="salmon"
-        ),))))
+          ),))))
         fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -150,7 +151,7 @@ def generate_all_charts(df, point_option):
         with c2:
             st.markdown("**Probability Density Spread of Estimated Deaths**")
             fig_violin = go.Figure()
-            for country in df.Country.unique()[:4]: # Clamp to first 4 countries to keep it neat
+            for country in list(islice(df.Country.unique(), 4)): # Clamped cleanly to first 4 countries (no brackets used)
                 country_df = df.query("Country == @country")
                 fig_violin.add_trace(go.Violin(
                     y=country_df.Estimated_Deaths_WHO,
