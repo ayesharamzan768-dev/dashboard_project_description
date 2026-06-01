@@ -8,7 +8,7 @@ st.set_page_config(page_title="Global Malaria Pathogen Intelligence", layout="wi
 
 st.markdown("""
 <style>
- .stApp { background-color: #0d1117; color: #c9d1d9; }
+.stApp { background-color: #0d1117; color: #c9d1d9; }
     div[data-testid="stMetricValue"] { color: #00ffcc!important; font-family: 'Courier New', monospace; font-weight: bold; }
     div[data-testid="stMetricLabel"] { color: #8b949e!important; }
 </style>
