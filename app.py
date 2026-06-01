@@ -1,9 +1,9 @@
 import streamlit as st
 import os
 from filters import load_and_clean_data, apply_dashboard_filters
-from charts import generate_all_charts
+import charts
 
-# Set high-tech dark page configuration
+# Set page configuration with high-tech theme
 st.set_page_config(page_title="Global Malaria Pathogen Intelligence", layout="wide")
 
 st.markdown("""
@@ -29,23 +29,6 @@ if raw_df.empty:
 
 # --- SIDEBAR CONTROL PANEL ---
 st.sidebar.markdown("<h3 style='color:#00ffcc;'>INTELLIGENCE CONSOLE</h3>", unsafe_allow_html=True)
-
-# Point Selection Matrix Navigation (10 Distinct Required Points)
-point_options = (
-    "01 Executive Summary (Data & KPIs)",
-    "02 Pie Chart: Regional Case Burden",
-    "03 Histogram: Rainfall Anomaly Spread",
-    "04 Line Chart: Temporal Trends",
-    "05 Bar Chart: Comparative Deaths",
-    "06 Scatter Plot: Climate-Intervention Link",
-    "07 Box Plot: Parasite Strain Variance",
-    "08 Heatmap: Correlation Matrix",
-    "09 Area Chart: Intervention Scaling",
-    "10 Count & Violin Plots: Data Density"
-)
-selected_point = st.sidebar.radio("Navigate Analytics Matrix:", point_options)
-
-st.sidebar.markdown("<hr style='border:1px solid #1f242c;'>", unsafe_allow_html=True)
 
 # 1. Year range slider (2000-2026)
 min_year = int(raw_df.Year.min())
@@ -90,16 +73,58 @@ if not filtered_df.empty:
         
     st.markdown("---")
     
-    # Render Point Actions Based on Side Panel Selection
-    if selected_point == "01 Executive Summary (Data & KPIs)":
-        st.subheader("📋 Active Spreadsheet Matrix View")
+    # 🎯 HORIZONTAL TABS LAYOUT IMPLEMENTATION (Bypassing brackets completely)
+    tab_options = list(tuple((
+        "Phase I: Interactive Macro Insights (Plotly 1-4)",
+        "Phase II-A: Core Interactive Architectures (Plotly 5-7)",
+        "Phase II-B: Advanced Fluid Distributions (Plotly 8-10)",
+        "📋 Complete Matrix Data Sheet"
+    )))
+    tab1, tab2, tab3, tab4 = st.tabs(tab_options)
+    
+    # ---- TAB 1: Phase I (Plots 1 to 4 in a Grid Layout) ----
+    with tab1:
+        row1_col1, row1_col2 = st.columns(2)
+        with row1_col1:
+            charts.plot_pie_chart(filtered_df)
+        with row1_col2:
+            charts.plot_histogram(filtered_df)
+            
+        st.markdown("---")
+        
+        row2_col1, row2_col2 = st.columns(2)
+        with row2_col1:
+            charts.plot_line_chart(filtered_df)
+        with row2_col2:
+            charts.plot_bar_chart(filtered_df)
+            
+    # ---- TAB 2: Phase II-A (Plots 5 to 7) ----
+    with tab2:
+        row3_col1, row3_col2 = st.columns(2)
+        with row3_col1:
+            charts.plot_scatter_plot(filtered_df)
+        with row3_col2:
+            charts.plot_box_plot(filtered_df)
+            
+        st.markdown("---")
+        charts.plot_heatmap(filtered_df)
+        
+    # ---- TAB 3: Phase II-B (Plots 8 to 10 Side-by-Side) ----
+    with tab3:
+        row4_col1, row4_col2 = st.columns(2)
+        with row4_col1:
+            charts.plot_area_chart(filtered_df)
+        with row4_col2:
+            charts.plot_count_plot(filtered_df)
+            
+        st.markdown("---")
+        charts.plot_violin_plot(filtered_df)
+        
+    # ---- TAB 4: COMPLETE SHEET ----
+    with tab4:
+        st.subheader("📋 Active Global Spreadsheet Matrix")
         st.markdown("Aap is table ko apni marzi se scroll kar sakte hain, columns par click karke sort kar sakte hain, aur right-corner se CSV download kar sakte hain.")
         st.dataframe(filtered_df, use_container_width=True, height=500)
-    else:
-        generate_all_charts(filtered_df, selected_point)
-        st.markdown("---")
-        st.subheader("📋 Segmented Data Table")
-        st.dataframe(filtered_df, use_container_width=True, height=250)
     
 else:
     st.error("No records match the current slider values. Adjust filters to load plots.")
