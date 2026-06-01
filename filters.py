@@ -7,28 +7,25 @@ def generate_132_countries_dataset(filepath):
     with exactly 132 countries across the 6 official WHO Regions.
     """
     # 47 African Region Countries
-    afr = ("Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cameroon", "Cabo Verde", "Central African Republic", "Chad", "Comoros", "Congo", "Cote d'Ivoire", "DR Congo", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "South Africa", "South Sudan", "Togo", "Uganda", "Tanzania", "Zambia", "Zimbabwe")
+    afr = ("Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cameroon", "Cabo Verde", "Central African Republic", "Chad", "Comoros", "Congo", "Cote d'Ivoire", "DR Congo", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Sierra Leone", "South Africa", "South Sudan", "Togo", "Uganda", "Tanzania", "Zambia", "Zimbabwe", "Seychelles")
     
-    # 25 Americas Region Countries
-    amr = ("Argentina", "Belize", "Bolivia", "Brazil", "Colombia", "Costa Rica", "Cuba", "Dominican Republic", "Ecuador", "El Salvador", "French Guiana", "Guatemala", "Guyana", "Haiti", "Honduras", "Jamaica", "Mexico", "Nicaragua", "Panama", "Paraguay", "Peru", "Suriname", "Bahamas", "Chile", "Venezuela")
+    # 27 Americas Region Countries
+    amr = ("Argentina", "Belize", "Bolivia", "Brazil", "Colombia", "Costa Rica", "Cuba", "Dominican Republic", "Ecuador", "El Salvador", "French Guiana", "Guatemala", "Guyana", "Haiti", "Honduras", "Jamaica", "Mexico", "Nicaragua", "Panama", "Paraguay", "Peru", "Suriname", "Bahamas", "Chile", "Venezuela", "Uruguay", "Trinidad and Tobago")
     
-    # 15 Eastern Mediterranean Region Countries
-    emr = ("Afghanistan", "Djibouti", "Egypt", "Iran", "Iraq", "Jordan", "Libya", "Morocco", "Oman", "Pakistan", "Saudi Arabia", "Somalia", "Sudan", "Syria", "Yemen")
+    # 16 Eastern Mediterranean Region Countries
+    emr = ("Afghanistan", "Djibouti", "Egypt", "Iran", "Iraq", "Jordan", "Libya", "Morocco", "Oman", "Pakistan", "Saudi Arabia", "Somalia", "Sudan", "Syria", "Yemen", "Lebanon")
     
     # 11 South-East Asia Region Countries
     sear = ("Bangladesh", "Bhutan", "DPR Korea", "India", "Indonesia", "Maldives", "Myanmar", "Nepal", "Sri Lanka", "Thailand", "Timor-Leste")
     
-    # 19 Western Pacific Region Countries
-    wpr = ("Cambodia", "China", "Fiji", "Kiribati", "Lao PDR", "Malaysia", "Marshall Islands", "Micronesia", "New Zealand", "Palau", "Papua New Guinea", "Philippines", "Republic of Korea", "Samoa", "Solomon Islands", "Tonga", "Tuvalu", "Vanuatu", "Vietnam")
+    # 21 Western Pacific Region Countries
+    wpr = ("Cambodia", "China", "Fiji", "Kiribati", "Lao PDR", "Malaysia", "Marshall Islands", "Micronesia", "New Zealand", "Palau", "Papua New Guinea", "Philippines", "Republic of Korea", "Samoa", "Solomon Islands", "Tonga", "Tuvalu", "Vanuatu", "Vietnam", "Australia", "Singapore")
     
-    # 15 European Region Countries
-    eur = ("Georgia", "Turkey", "Tajikistan", "Azerbaijan", "Uzbekistan", "Kyrgyzstan", "Armenia", "Turkmenistan", "Russian Federation", "Albania", "Bosnia and Herzegovina", "Montenegro", "North Macedonia", "Serbia", "Ukraine")
+    # 10 European Region Countries
+    eur = ("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Russian Federation", "Tajikistan", "Turkey", "Turkmenistan", "Uzbekistan")
 
     rows = list()
-    
-    # Loop generates continuous yearly profiles from 2000 to 2026 (No gaps)
     for year in range(2000, 2027):
-        # 1. Africa
         for country in afr:
             seed_val = sum(map(ord, country))
             base = (seed_val % 400 + 80) * 1000
@@ -36,8 +33,6 @@ def generate_132_countries_dataset(filepath):
             deaths = int(cases * 0.005)
             nets = int(cases * 0.8)
             rows.append(dict(Year=year, Country=country, WHO_Region="Africa", Reported_Confirmed_Cases=cases, Estimated_Cases_WHO=int(cases*1.5), Reported_Deaths=deaths, Estimated_Deaths_WHO=int(deaths*1.2), Plasmodium_Vivax_Pct=15.0, Rainfall_Anomaly_mm=25.4, Bednets_Distributed=nets))
-            
-        # 2. Americas
         for country in amr:
             seed_val = sum(map(ord, country))
             base = (seed_val % 90 + 9) * 1000
@@ -45,8 +40,6 @@ def generate_132_countries_dataset(filepath):
             deaths = int(cases * 0.001)
             nets = int(cases * 0.6)
             rows.append(dict(Year=year, Country=country, WHO_Region="Americas", Reported_Confirmed_Cases=cases, Estimated_Cases_WHO=int(cases*1.3), Reported_Deaths=deaths, Estimated_Deaths_WHO=int(deaths*1.1), Plasmodium_Vivax_Pct=85.0, Rainfall_Anomaly_mm=-5.2, Bednets_Distributed=nets))
-            
-        # 3. Eastern Mediterranean (with flood spike simulations for Pakistan and Sudan)
         for country in emr:
             seed_val = sum(map(ord, country))
             base = (seed_val % 150 + 15) * 1000
@@ -55,8 +48,6 @@ def generate_132_countries_dataset(filepath):
             deaths = int(cases * 0.002)
             nets = int(cases * 0.7)
             rows.append(dict(Year=year, Country=country, WHO_Region="Eastern Mediterranean", Reported_Confirmed_Cases=cases, Estimated_Cases_WHO=int(cases*1.4), Reported_Deaths=deaths, Estimated_Deaths_WHO=int(deaths*1.2), Plasmodium_Vivax_Pct=79.0, Rainfall_Anomaly_mm=85.6, Bednets_Distributed=nets))
-            
-        # 4. South-East Asia
         for country in sear:
             seed_val = sum(map(ord, country))
             base = (seed_val % 250 + 25) * 1000
@@ -64,8 +55,6 @@ def generate_132_countries_dataset(filepath):
             deaths = int(cases * 0.003)
             nets = int(cases * 0.9)
             rows.append(dict(Year=year, Country=country, WHO_Region="South-East Asia", Reported_Confirmed_Cases=cases, Estimated_Cases_WHO=int(cases*1.6), Reported_Deaths=deaths, Estimated_Deaths_WHO=int(deaths*1.3), Plasmodium_Vivax_Pct=48.0, Rainfall_Anomaly_mm=12.4, Bednets_Distributed=nets))
-            
-        # 5. Western Pacific
         for country in wpr:
             seed_val = sum(map(ord, country))
             base = (seed_val % 120 + 12) * 1000
@@ -73,8 +62,6 @@ def generate_132_countries_dataset(filepath):
             deaths = int(cases * 0.001)
             nets = int(cases * 0.5)
             rows.append(dict(Year=year, Country=country, WHO_Region="Western Pacific", Reported_Confirmed_Cases=cases, Estimated_Cases_WHO=int(cases*1.2), Reported_Deaths=deaths, Estimated_Deaths_WHO=int(deaths*1.1), Plasmodium_Vivax_Pct=55.0, Rainfall_Anomaly_mm=4.1, Bednets_Distributed=nets))
-            
-        # 6. Europe (Eliminated territory simulation)
         for country in eur:
             seed_val = sum(map(ord, country))
             base = (seed_val % 8 + 1) * 10
