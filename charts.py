@@ -5,7 +5,7 @@ from itertools import islice
 
 def generate_all_charts(df, point_option):
     """
-    Core plotting engine. Renders the requested interactive chart based on the Side Panel selection.
+    Core surveillance plotting engine. Renders the requested interactive chart based on the Side Panel selection.
     """
     if df.empty:
         st.warning("No data available for the selected filters.")
