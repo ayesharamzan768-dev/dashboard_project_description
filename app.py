@@ -2,19 +2,10 @@ import streamlit as st
 import os
 from filters import load_and_clean_data, apply_dashboard_filters
 from charts import generate_all_charts
+from itertools import islice
 
 # Set high-tech dark page configuration
 st.set_page_config(page_title="Global Malaria Pathogen Intelligence", layout="wide")
-
-# Custom Glowing Dark CSS styles for visual parity
-st.markdown("""
-<style>
-  .stApp { background-color: #0d1117; color: #c9d1d9; }
-    div[data-testid="stMetricValue"] { color: #00ffcc!important; font-family: 'Courier New', monospace; font-weight: bold; }
-    div[data-testid="stMetricLabel"] { color: #8b949e!important; }
-    div { background-color: #090d12!important; border-right: 1px solid #1f242c; }
-</style>
-""", unsafe_allow_html=True)
 
 st.title("🛡️ Global Malaria & Pathogen Intelligence Portal")
 st.markdown("A futuristic unified Command Center mapping chronological trends, intervention dynamics, and pathogenetic variance since 2000.")
@@ -77,43 +68,19 @@ if not filtered_df.empty:
     kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
     
     with kpi_col1:
-        st.markdown(f"""
-        <div style="background-color:#161b22; padding:20px; border-radius:10px; border:1px solid #1f242c; border-left: 5px solid #00ffcc; box-shadow: 0px 0px 15px rgba(0,255,204,0.15);">
-            <h5 style="color:#8b949e; margin:0; font-size:12px; font-weight:bold;">TOTAL NATIONS</h5>
-            <h2 style="color:#00ffcc; margin:10px 0 0 0; font-family:monospace; font-size:32px;">{filtered_df.Country.nunique()} / 125</h2>
-            <p style="color:#58a6ff; margin:5px 0 0 0; font-size:11px;">★ Active Epidemic Centers</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric(label="Total Nations", value=f"{filtered_df.Country.nunique()} / 125")
         
     with kpi_col2:
         total_cases_mil = filtered_df.Estimated_Cases_WHO.sum() / 1000000
-        st.markdown(f"""
-        <div style="background-color:#161b22; padding:20px; border-radius:10px; border:1px solid #1f242c; border-left: 5px solid #ff3366; box-shadow: 0px 0px 15px rgba(255,51,102,0.15);">
-            <h5 style="color:#8b949e; margin:0; font-size:12px; font-weight:bold;">WHO ESTIMATED CASES</h5>
-            <h2 style="color:#ff3366; margin:10px 0 0 0; font-family:monospace; font-size:32px;">{total_cases_mil:.2f}M</h2>
-            <p style="color:#ff3366; margin:5px 0 0 0; font-size:11px;">▲ Chronological Velocity</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric(label="WHO Estimated Cases", value=f"{total_cases_mil:.2f}M")
         
     with kpi_col3:
         total_deaths = filtered_df.Estimated_Deaths_WHO.sum()
-        st.markdown(f"""
-        <div style="background-color:#161b22; padding:20px; border-radius:10px; border:1px solid #1f242c; border-left: 5px solid #ffcc00; box-shadow: 0px 0px 15px rgba(255,204,0,0.15);">
-            <h5 style="color:#8b949e; margin:0; font-size:12px; font-weight:bold;">ESTIMATED PATHOGEN MORTALITY</h5>
-            <h2 style="color:#ffcc00; margin:10px 0 0 0; font-family:monospace; font-size:32px;">{total_deaths:,}</h2>
-            <p style="color:#ffcc00; margin:5px 0 0 0; font-size:11px;">▼ Mortality Rate Vector</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric(label="Estimated Pathogen Mortality", value=f"{total_deaths:,}")
         
     with kpi_col4:
         total_nets_mil = filtered_df.Bednets_Distributed.sum() / 1000000
-        st.markdown(f"""
-        <div style="background-color:#161b22; padding:20px; border-radius:10px; border:1px solid #1f242c; border-left: 5px solid #33ccff; box-shadow: 0px 0px 15px rgba(51,204,255,0.15);">
-            <h5 style="color:#8b949e; margin:0; font-size:12px; font-weight:bold;">BEDNETS DISTRIBUTED</h5>
-            <h2 style="color:#33ccff; margin:10px 0 0 0; font-family:monospace; font-size:32px;">{total_nets_mil:.2f}M</h2>
-            <p style="color:#33ccff; margin:5px 0 0 0; font-size:11px;">✚ Target Protection Units</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric(label="Bednets Distributed", value=f"{total_nets_mil:.2f}M")
         
     st.markdown("---")
     
