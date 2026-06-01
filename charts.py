@@ -1,160 +1,93 @@
-import plotly.graph_objects as go
 import streamlit as st
-import pandas as pd
-from itertools import islice
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 
-def generate_all_charts(df, point_option):
-    """
-    Core surveillance plotting engine. Renders the requested interactive chart based on the Side Panel selection.
-    """
-    if df.empty:
-        st.warning("No data available for the selected filters.")
-        return
+def display_page_layout(title, fig, dataframe, insights_text):
+    st.subheader(title)
+    
+    # Side-by-Side arrangement using streamit columns
+    col1, col2 = st.columns([1.2, 0.8])
+    
+    with col1:
+        st.pyplot(fig) if not isinstance(fig, px.colors.Sequential) and not hasattr(fig, 'to_json') else st.plotly_chart(fig, use_container_width=True)
+        
+    with col2:
+        st.markdown("**📋 Associated Interactive Data Matrix**")
+        st.dataframe(dataframe[['Country', 'Year', 'WHO_Region', dataframe.columns[3]]].head(100), height=250)
+        
+    st.markdown(f"### 💡 Dynamic EDA Insights\n{insights_text}")
 
-    df = df.assign(Country=df.Country.astype(str))
-    df = df.assign(WHO_Region=df.WHO_Region.astype(str))
+# 1. Total Reported Cases
+def plot_reported_cases(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sns.lineplot(data=df, x='Year', y='Reported_Cases', estimator='sum', marker='o', color='#38bdf8', ax=ax)
+    ax.set_title("Annual Total Confirmed Reported Malaria Incidences")
+    display_page_layout("Point 1: Malaria Burden Evaluation (Reported Cases)", fig, df, "The line trend represents aggregate global counts. Sharp drops identify intervals with increased medical surveillance and vector intervention distributions.")
 
-    # --- 1. PIE CHART ---
-    if point_option == "02 Pie Chart: Regional Case Burden":
-        st.subheader("Distribution of WHO Estimated Cases by Country")
-        country_cases = df.groupby("Country").agg(dict(Estimated_Cases_WHO="sum")).reset_index()
-        country_cases = country_cases.sort_values(by="Estimated_Cases_WHO", ascending=False).head(10)
-        fig = go.Figure(data=list(tuple((go.Pie(
-            labels=country_cases.Country,
-            values=country_cases.Estimated_Cases_WHO,
-            hole=0.3
-        ),))))
-        fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 2. Estimated Burden vs Reported Cases
+def plot_estimated_vs_reported(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    summary = df.groupby('Year')[['Estimated_Cases', 'Reported_Cases']].sum().reset_index()
+    plt.fill_between(summary['Year'], summary['Estimated_Cases'], label='Estimated Cases (Unreported Gap)', color='orange', alpha=0.4)
+    plt.plot(summary['Year'], summary['Reported_Cases'], label='Confirmed Reported Cases', color='red', marker='x')
+    ax.set_title("Reporting Efficiency Gap Analysis")
+    plt.legend()
+    display_page_layout("Point 2: Surveillance System Sensitivity Assessment", fig, df, "The discrepancy gap reflects health infrastructure sensitivity. Minimizing this gap implies progressive regional diagnostics inclusion.")
 
-    # --- 2. HISTOGRAM ---
-    elif point_option == "03 Histogram: Rainfall Anomaly Spread":
-        st.subheader("Frequency Distribution of Precipitation Anomalies (mm)")
-        fig = go.Figure(data=list(tuple((go.Histogram(
-            x=df.Rainfall_Anomaly_mm,
-            marker_color="skyblue"
-        ),))))
-        fig.update_layout(bargap=0.1, margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 3. Mortality Distribution
+def plot_mortality_distribution(df):
+    fig = px.bar(df, x='WHO_Region', y='Estimated_Deaths', color='WHO_Region', title="Proportional Regional Malaria Mortality Attributions")
+    display_page_layout("Point 3: Mortality Share Across WHO Regions", fig, df, "African Region persistently accounts for extreme proportions of mortality burdens, prioritizing defensive actions here.")
 
-    # --- 3. LINE CHART ---
-    elif point_option == "04 Line Chart: Temporal Trends":
-        st.subheader("Yearly Malaria Cases Trend Line (2000 - 2026)")
-        yearly = df.groupby("Year").agg(dict(Reported_Confirmed_Cases="sum", Estimated_Cases_WHO="sum")).reset_index()
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=yearly.Year, 
-            y=yearly.Estimated_Cases_WHO, 
-            name='WHO Estimated', 
-            mode='lines+markers',
-            line=dict(color='red', width=2)
-        ))
-        fig.add_trace(go.Scatter(
-            x=yearly.Year, 
-            y=yearly.Reported_Confirmed_Cases, 
-            name='Reported Confirmed', 
-            mode='lines+markers',
-            line=dict(color='navy', width=2)
-        ))
-        fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 4. Intervention Effectiveness
+def plot_intervention_impact(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sns.scatterplot(data=df, x='Bednets_Distributed', y='Reported_Cases', alpha=0.6, color='green', ax=ax)
+    ax.set_title("Vector Control (ITN) vs Incident Density Mapping")
+    display_page_layout("Point 4: Evaluation of Defensive Controls Effectiveness", fig, df, "Clusters extending towards high distribution volumes with lower cases confirm bednet programmatic efficiencies.")
 
-    # --- 4. BAR CHART ---
-    elif point_option == "05 Bar Chart: Comparative Deaths":
-        st.subheader("Comparative Global Reported Deaths by Country")
-        country_deaths = df.groupby("Country").agg(dict(Reported_Deaths="sum")).reset_index()
-        country_deaths = country_deaths.sort_values(by="Reported_Deaths", ascending=False).head(10)
-        fig = go.Figure(data=list(tuple((go.Bar(
-            x=country_deaths.Country,
-            y=country_deaths.Reported_Deaths,
-            marker_color="salmon"
-        ),))))
-        fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 5. Climatic Influence (Rainfall Anomaly)
+def plot_climatic_influence(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sns.regplot(data=df, x='Rainfall_Anomaly_mm', y='Estimated_Cases', scatter_kws={'alpha':0.3}, line_kws={'color':'purple'}, ax=ax)
+    ax.set_title("Climate Anomaly Adjustments on Incidences")
+    display_page_layout("Point 5: Environmental Determinants Correlation Analysis", fig, df, "Positive directional coefficients link extreme precipitation anomalies to macro vector breeding ecosystem enhancement.")
 
-    # --- 5. SCATTER PLOT ---
-    elif point_option == "06 Scatter Plot: Climate-Intervention Link":
-        st.subheader("Relationship of Rainfall Anomalies vs. Confirmed Cases")
-        fig = go.Figure()
-        for country in df.Country.unique():
-            country_df = df.query("Country == @country")
-            fig.add_trace(go.Scatter(
-                x=country_df.Rainfall_Anomaly_mm,
-                y=country_df.Reported_Confirmed_Cases,
-                mode='markers',
-                name=str(country),
-                marker=dict(size=12)
-            ))
-        fig.update_layout(xaxis_title="Rainfall Anomaly (mm)", yaxis_title="Confirmed Cases", margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 6. Parasite Composition Shift
+def plot_parasite_shift(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sns.boxplot(data=df, x='WHO_Region', y='Plasmodium_Vivax_Pct', ax=ax)
+    plt.xticks(rotation=20)
+    ax.set_title("Regional Plasmodium Vivax Parasite Prevalences")
+    display_page_layout("Point 6: Diagnostic Trait Stratification", fig, df, "Vivax dominance is visibly pronounced outside African ecosystems, defining changes in diagnostic target methods.")
 
-    # --- 6. BOX PLOT ---
-    elif point_option == "07 Box Plot: Parasite Strain Variance":
-        st.subheader("Distribution Spread of Plasmodium Vivax Parasite Strain")
-        fig = go.Figure()
-        for region in df.WHO_Region.unique():
-            region_df = df.query("WHO_Region == @region")
-            fig.add_trace(go.Box(
-                y=region_df.Plasmodium_Vivax_Pct,
-                name=str(region)
-            ))
-        fig.update_layout(yaxis_title="Vivax Proportion Percentage (%)", margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 7. Case Fatality Ratios (CFR)
+def plot_case_fatality(df):
+    df['CFR'] = (df['Reported_Deaths'] / (df['Reported_Cases'] + 1)) * 100
+    fig, ax = plt.subplots(figsize=(7, 4))
+    sns.histplot(data=df, x='CFR', kde=True, bins=30, color='brown', ax=ax)
+    ax.set_title("Aggregated Case Fatality Ratio Trajectories")
+    display_page_layout("Point 7: Healthcare Responsiveness Index (CFR)", fig, df, "Fatality indices clustering towards the lower quartile indicates immediate curative and clinical response optimizations.")
 
-    # --- 7. HEATMAP ---
-    elif point_option == "08 Heatmap: Correlation Matrix":
-        st.subheader("Feature Correlation Grid Matrix Analysis")
-        corr_cols = list(('Reported_Confirmed_Cases', 'Estimated_Cases_WHO', 'Reported_Deaths', 'Estimated_Deaths_WHO', 'Bednets_Distributed'))
-        corr_matrix = df.filter(items=corr_cols).corr()
-        fig = go.Figure(data=list(tuple((go.Heatmap(
-            z=corr_matrix.values.tolist(),
-            x=corr_matrix.columns.tolist(),
-            y=corr_matrix.index.tolist(),
-            colorscale="Viridis",
-            zmin=-1, zmax=1
-        ),))))
-        fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 8. Decadal Projections (2024 - 2026 Trajectories)
+def plot_projections(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    future_df = df[df['Year'] >= 2020]
+    sns.lineplot(data=future_df, x='Year', y='Estimated_Cases', hue='WHO_Region', ax=ax)
+    ax.set_title("Forecasting Vector Trends Through 2026")
+    display_page_layout("Point 8: Strategic Horizons & Targets (2020 - 2026)", fig, df, "Projections highlight regions close to meeting the WHO GTS elimination objectives by 2026 versus stagnating models.")
 
-    # --- 8. AREA CHART ---
-    elif point_option == "09 Area Chart: Intervention Scaling":
-        st.subheader("Cumulative Scale-up of Bednets Intervention Over Time")
-        bednets_yearly = df.groupby("Year").agg(dict(Bednets_Distributed="sum")).reset_index()
-        fig = go.Figure(data=list(tuple((go.Scatter(
-            x=bednets_yearly.Year,
-            y=bednets_yearly.Bednets_Distributed,
-            fill='tozeroy',
-            line=dict(color='deepskyblue')
-        ),))))
-        fig.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+# 9. Top 10 High Burden Hierarchies
+def plot_top_countries(df):
+    top10 = df.groupby('Country')['Estimated_Cases'].sum().nlargest(10).reset_index()
+    fig = px.pie(top10, values='Estimated_Cases', names='Country', title="Top 10 High-Burden Concentration Breakdown")
+    display_page_layout("Point 9: Geographic Concentration Analysis", fig, df, "Concentrated global distribution confirms that specific strategic focus on these 10 hotspots manages massive absolute loads.")
 
-    # --- 9. COUNT & VIOLIN PLOTS ---
-    elif point_option == "10 Count & Violin Plots: Data Density":
-        st.subheader("Data Profiles Tracking Frequency & Density Spread")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("**Tracked Record Counts per Region**")
-            prov_counts = df.WHO_Region.value_counts().reset_index()
-            prov_counts.columns = ('WHO_Region', 'Count')
-            fig_count = go.Figure(data=list(tuple((go.Bar(
-                x=prov_counts.WHO_Region,
-                y=prov_counts.Count,
-                marker_color="violet"
-            ),))))
-            fig_count.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-            st.plotly_chart(fig_count, use_container_width=True)
-            
-        with c2:
-            st.markdown("**Probability Density Spread of Estimated Deaths**")
-            fig_violin = go.Figure()
-            for country in list(islice(df.Country.unique(), 4)):
-                country_df = df.query("Country == @country")
-                fig_violin.add_trace(go.Violin(
-                    y=country_df.Estimated_Deaths_WHO,
-                    name=str(country),
-                    box_visible=True,
-                    meanline_visible=True
-                ))
-            fig_violin.update_layout(margin=dict(t=30, b=10, l=10, r=10), template="plotly_dark")
-            st.plotly_chart(fig_violin, use_container_width=True)
+# 10. Multi-Variant Heatmap Correlation
+def plot_correlation_heatmap(df):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+    sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+    ax.set_title("System Attributes Multivariant Relationships Matrix")
+    display_page_layout("Point 10: Dynamic Feature Dependency Metrics", fig, df, "Matrix exposes correlation strengths between physical distribution numbers, climate variances, and net death logs.")
